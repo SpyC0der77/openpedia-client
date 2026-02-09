@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useTheme } from "next-themes"
+import Link from "next/link";
+import { useTheme } from "next-themes";
 import {
   ChevronDown,
   Menu,
@@ -9,40 +9,39 @@ import {
   Moon,
   MoreHorizontal,
   ListOrdered,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
+} from "@/components/ui/collapsible";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import type { WikipediaArticle } from "@/lib/wikipedia"
-import { WikiSearch } from "@/components/wiki-search"
+} from "@/components/ui/tooltip";
+import type { WikipediaArticle } from "@/lib/wikipedia";
+import { WikiSearch } from "@/components/wiki-search";
 
 const SIDEBAR_NAV_LINKS = [
   "Main page",
   "Contents",
   "Current events",
   "Random article",
-  "About Wikipedia",
+  "About",
   "Contact us",
   "Donate",
-]
+];
 
 const SIDEBAR_TOOLS_LINKS = [
   "What links here",
@@ -52,10 +51,10 @@ const SIDEBAR_TOOLS_LINKS = [
   "Permanent link",
   "Page information",
   "Cite this page",
-]
+];
 
 function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -74,11 +73,11 @@ function ThemeToggle() {
         {theme === "dark" ? "Switch to light" : "Switch to dark"}
       </TooltipContent>
     </Tooltip>
-  )
+  );
 }
 
 interface WikiArticleViewProps {
-  article: WikipediaArticle
+  article: WikipediaArticle;
 }
 
 export function WikiArticleView({ article }: WikiArticleViewProps) {
@@ -87,49 +86,27 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="mx-auto flex h-14 max-w-[1500px] items-center gap-4 px-4">
-            <div className="flex items-center gap-2 lg:hidden">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Open menu">
-                    <Menu className="size-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-72 p-0">
-                  <nav className="flex flex-col gap-1 p-4">
-                    <div className="mb-4 text-sm font-medium text-muted-foreground">
-                      Navigation
-                    </div>
-                    {SIDEBAR_NAV_LINKS.map((link) => (
-                      <Link
-                        key={link}
-                        href="#"
-                        className="text-sm text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        {link}
-                      </Link>
-                    ))}
-                    <Separator className="my-3" />
-                    <div className="mb-2 text-sm font-medium text-muted-foreground">
-                      Tools
-                    </div>
-                    {SIDEBAR_TOOLS_LINKS.map((link) => (
-                      <Link
-                        key={link}
-                        href="#"
-                        className="text-sm text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        {link}
-                      </Link>
-                    ))}
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Open menu">
+                  <Menu className="size-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="min-w-[12rem]">
+                {SIDEBAR_NAV_LINKS.map((link) => (
+                  <DropdownMenuItem key={link} asChild>
+                    <Link href="#" className="text-blue-600 dark:text-blue-400">
+                      {link}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Link
               href="/"
-              className="shrink-0 font-serif text-xl font-bold tracking-tight text-foreground"
+              className="shrink-0 font-sans text-xl font-bold tracking-tight text-foreground"
             >
-              Wikipedia
+              Openpedia <span className="text-muted-foreground">Client</span>
             </Link>
             <div className="flex flex-1 items-center justify-end gap-2">
               <div className="hidden w-64 max-w-xs sm:block">
@@ -165,16 +142,6 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
         <div className="mx-auto flex w-full max-w-[1500px]">
           <aside className="hidden w-40 shrink-0 border-r border-border py-4 pl-4 pr-2 lg:block">
             <nav className="flex flex-col gap-1 text-sm">
-              {SIDEBAR_NAV_LINKS.map((link) => (
-                <Link
-                  key={link}
-                  href="#"
-                  className="text-blue-600 hover:underline dark:text-blue-400"
-                >
-                  {link}
-                </Link>
-              ))}
-              <Separator className="my-3" />
               {article.sections.length > 0 && (
                 <>
                   <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -272,7 +239,9 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                           {article.categories.map((cat, i) => (
                             <span key={i}>
                               <Link
-                                href={`/wiki/Category:${encodeURIComponent(cat)}`}
+                                href={`/wiki/Category:${encodeURIComponent(
+                                  cat
+                                )}`}
                                 className="text-blue-600 hover:underline dark:text-blue-400"
                               >
                                 {cat}
@@ -284,7 +253,6 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                       </section>
                     )}
                   </div>
-
                 </div>
               </article>
             </div>
@@ -296,7 +264,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
             <div className="grid gap-6 text-sm sm:grid-cols-2 md:grid-cols-4">
               <div>
                 <h4 className="mb-2 font-semibold text-foreground">
-                  Wikipedia
+                  Openpedia Client
                 </h4>
                 <ul className="space-y-1 text-muted-foreground">
                   <li>
@@ -304,7 +272,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                       href="#"
                       className="text-blue-600 hover:underline dark:text-blue-400"
                     >
-                      About Wikipedia
+                      About
                     </Link>
                   </li>
                   <li>
@@ -320,13 +288,15 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                       href="#"
                       className="text-blue-600 hover:underline dark:text-blue-400"
                     >
-                      Contact Wikipedia
+                      Contact
                     </Link>
                   </li>
                 </ul>
               </div>
               <div>
-                <h4 className="mb-2 font-semibold text-foreground">Community</h4>
+                <h4 className="mb-2 font-semibold text-foreground">
+                  Community
+                </h4>
                 <ul className="space-y-1 text-muted-foreground">
                   <li>
                     <Link
@@ -355,7 +325,9 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                 </ul>
               </div>
               <div>
-                <h4 className="mb-2 font-semibold text-foreground">Resources</h4>
+                <h4 className="mb-2 font-semibold text-foreground">
+                  Resources
+                </h4>
                 <ul className="space-y-1 text-muted-foreground">
                   <li>
                     <Link
@@ -405,14 +377,14 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                 href="#"
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
-                Wikipedia
+                Openpedia Client
               </Link>
               <span>·</span>
               <Link
                 href="#"
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
-                The Free Encyclopedia
+                A Wikipedia client
               </Link>
               <span>·</span>
               <span>
@@ -423,5 +395,5 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
         </footer>
       </div>
     </TooltipProvider>
-  )
+  );
 }

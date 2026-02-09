@@ -124,3 +124,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide edit button and separator for h1 in wiki content (matches h2 behavior for h2+ only) */
+.wiki-content .mw-parser-output h1 .mw-editsection,
+.wiki-content .mw-parser-output .mw-heading1 .mw-editsection {
+  display: none;
+}
+.wiki-content .mw-parser-output h1,
+.wiki-content .mw-parser-output .mw-heading1 {
+  border-bottom: none;
+  padding-bottom: 0;
+}

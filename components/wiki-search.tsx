@@ -1,58 +1,58 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
-import { Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { searchWikipedia, type WikipediaSearchResult } from "@/lib/wikipedia"
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { searchWikipedia, type WikipediaSearchResult } from "@/lib/wikipedia";
 
 export function WikiSearch() {
-  const router = useRouter()
-  const [query, setQuery] = useState("")
-  const [suggestions, setSuggestions] = useState<WikipediaSearchResult[]>([])
-  const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<WikipediaSearchResult[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const fetchSuggestions = useCallback(async (q: string) => {
     if (!q.trim()) {
-      setSuggestions([])
-      return
+      setSuggestions([]);
+      return;
     }
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const results = await searchWikipedia(q, 8)
-      setSuggestions(results)
-      setIsOpen(true)
+      const results = await searchWikipedia(q, 8);
+      setSuggestions(results);
+      setIsOpen(true);
     } catch {
-      setSuggestions([])
+      setSuggestions([]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => fetchSuggestions(query), 200)
-    return () => clearTimeout(timer)
-  }, [query, fetchSuggestions])
+    const timer = setTimeout(() => fetchSuggestions(query), 200);
+    return () => clearTimeout(timer);
+  }, [query, fetchSuggestions]);
 
   const handleSelect = (slug: string) => {
-    setQuery("")
-    setSuggestions([])
-    setIsOpen(false)
-    router.push(`/wiki/${encodeURIComponent(slug)}`)
-  }
+    setQuery("");
+    setSuggestions([]);
+    setIsOpen(false);
+    router.push(`/wiki/${encodeURIComponent(slug)}`);
+  };
 
   const handleBlur = () => {
-    setTimeout(() => setIsOpen(false), 150)
-  }
+    setTimeout(() => setIsOpen(false), 150);
+  };
 
   return (
     <div ref={containerRef} className="relative w-full">
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search Wikipedia"
+          placeholder="Search Openpedia"
           className="h-8 pl-8 text-sm"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -60,8 +60,8 @@ export function WikiSearch() {
           onBlur={handleBlur}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
-              setIsOpen(false)
-              ;(e.target as HTMLInputElement).blur()
+              setIsOpen(false);
+              (e.target as HTMLInputElement).blur();
             }
           }}
         />
@@ -80,8 +80,8 @@ export function WikiSearch() {
                     type="button"
                     className="w-full rounded-sm px-3 py-2 text-left text-sm text-blue-600 hover:bg-accent hover:text-accent-foreground dark:text-blue-400 dark:hover:bg-accent dark:hover:text-accent-foreground"
                     onMouseDown={(e) => {
-                      e.preventDefault()
-                      handleSelect(item.slug)
+                      e.preventDefault();
+                      handleSelect(item.slug);
                     }}
                   >
                     {item.title}
@@ -93,5 +93,5 @@ export function WikiSearch() {
         </div>
       )}
     </div>
-  )
+  );
 }
