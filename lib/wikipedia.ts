@@ -54,6 +54,32 @@ function rewriteWikiLinks(html: string): string {
   )
 }
 
+export interface WikipediaSearchResult {
+  title: string
+  slug: string
+}
+
+export async function searchWikipedia(
+  query: string,
+  limit = 8
+): Promise<WikipediaSearchResult[]> {
+  if (!query.trim()) return []
+  const res = await fetch(
+    `${WIKI_API}?action=opensearch&search=${encodeURIComponent(query)}&limit=${limit}&format=json&origin=*`,
+    { headers: { "User-Agent": USER_AGENT } }
+  )
+  if (!res.ok) return []
+  const data = (await res.json()) as [string, string[], string[], string[]]
+  const [, titles, , urls] = data
+  if (!titles?.length || !urls?.length) return []
+  return titles.map((title, i) => {
+    const url = urls[i] ?? ""
+    const match = url.match(/\/wiki\/(.+)$/)
+    const slug = match ? decodeURIComponent(match[1]) : title.replace(/\s+/g, "_")
+    return { title, slug }
+  })
+}
+
 export async function fetchWikipediaArticle(title: string): Promise<WikipediaArticle | null> {
   const encodedTitle = encodeURIComponent(title.replace(/_/g, " "))
 
