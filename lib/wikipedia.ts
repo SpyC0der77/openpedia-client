@@ -42,6 +42,7 @@ export interface WikipediaArticle {
   extract: string;
   extractHtml?: string;
   html: string;
+  wikitext: string;
   sections: { id: string; title: string; level: number }[];
   categories: string[];
   thumbnail?: { source: string; width: number; height: number };
@@ -90,13 +91,20 @@ export async function fetchWikipediaArticle(
 ): Promise<WikipediaArticle | null> {
   const encodedTitle = encodeURIComponent(title.replace(/_/g, " "));
 
-  const [summaryRes, parseRes] = await Promise.all([
+  const [summaryRes, parseRes, revisionsRes] = await Promise.all([
     fetch(`${WIKI_REST}/page/summary/${encodedTitle}`, {
       headers: { "User-Agent": USER_AGENT },
       next: { revalidate: 3600 },
     }),
     fetch(
       `${WIKI_API}?action=parse&page=${encodedTitle}&prop=text|sections|categories&format=json&origin=*`,
+      {
+        headers: { "User-Agent": USER_AGENT },
+        next: { revalidate: 3600 },
+      }
+    ),
+    fetch(
+      `${WIKI_API}?action=query&prop=revisions&rvprop=content&titles=${encodedTitle}&format=json&origin=*`,
       {
         headers: { "User-Agent": USER_AGENT },
         next: { revalidate: 3600 },
@@ -126,6 +134,21 @@ export async function fetchWikipediaArticle(
   const categories =
     parse.categories?.map((c) => c["*"].replace(/^Category:/, "")) ?? [];
 
+  let wikitext = "";
+  if (revisionsRes.ok) {
+    const revisionsData = (await revisionsRes.json()) as {
+      query?: {
+        pages?: Record<string, { revisions?: { "*"?: string }[] }>;
+      };
+    };
+    const pages = revisionsData.query?.pages;
+    if (pages) {
+      const page = Object.values(pages)[0];
+      const rev = page?.revisions?.[0];
+      if (rev && "*" in rev) wikitext = rev["*"] ?? "";
+    }
+  }
+
   let extract = "";
   let extractHtml: string | undefined;
   let thumbnail: WikipediaArticle["thumbnail"];
@@ -144,6 +167,7 @@ export async function fetchWikipediaArticle(
     extract,
     extractHtml,
     html,
+    wikitext,
     sections,
     categories,
     thumbnail,

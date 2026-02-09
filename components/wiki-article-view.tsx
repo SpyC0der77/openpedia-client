@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import {
@@ -30,6 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { WikipediaArticle } from "@/lib/wikipedia";
 import { WikiSearch } from "@/components/wiki-search";
 
@@ -80,7 +82,15 @@ interface WikiArticleViewProps {
   article: WikipediaArticle;
 }
 
+const TAB_STYLE =
+  "rounded-none border-0 data-[state=active]:border-0 data-[state=active]:bg-transparent after:opacity-0";
+
 export function WikiArticleView({ article }: WikiArticleViewProps) {
+  const [panelTab, setPanelTab] = useState<"article" | "talk">("article");
+  const [viewTab, setViewTab] = useState<"source" | "preview" | "history">(
+    "preview"
+  );
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background">
@@ -185,74 +195,142 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
           <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
             <div className="mx-auto flex w-full max-w-[1240px] gap-8">
               <article className="min-w-0 flex-1">
-                <h1 className="mb-4 font-serif text-[1.75rem] font-normal leading-tight text-foreground">
+                <h1 className="mb-2 font-serif text-[1.75rem] font-normal leading-tight text-foreground">
                   {article.title}
                 </h1>
 
-                <div className="xl:hidden">
-                  <Collapsible defaultOpen={false} className="group">
-                    <CollapsibleTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex w-full items-center justify-between gap-2 border border-border py-2 px-3 text-left font-normal"
-                      >
-                        <span className="flex items-center gap-2">
-                          <ListOrdered className="size-4" />
-                          Contents
-                        </span>
-                        <ChevronDown className="size-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <nav className="mt-0 border border-border border-t-0 p-3">
-                        <ul className="space-y-1 text-sm">
-                          {article.sections.map((s) => (
-                            <li
-                              key={s.id}
-                              style={{ paddingLeft: (s.level - 1) * 12 }}
-                            >
-                              <a
-                                href={`#${s.id}`}
-                                className="text-blue-600 hover:underline dark:text-blue-400"
-                              >
-                                {s.title}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </nav>
-                    </CollapsibleContent>
-                  </Collapsible>
+                <div className="mb-4 flex items-end justify-between gap-4 border-b border-border">
+                  <Tabs
+                    value={panelTab}
+                    onValueChange={(v) => setPanelTab(v as "article" | "talk")}
+                  >
+                    <TabsList
+                      variant="line"
+                      className="h-9 w-auto rounded-none border-0 bg-transparent p-0"
+                    >
+                      <TabsTrigger value="article" className={TAB_STYLE}>
+                        Article
+                      </TabsTrigger>
+                      <TabsTrigger value="talk" className={TAB_STYLE}>
+                        Talk
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <Tabs
+                    value={viewTab}
+                    onValueChange={(v) =>
+                      setViewTab(v as "source" | "preview" | "history")
+                    }
+                  >
+                    <TabsList
+                      variant="line"
+                      className="h-9 w-auto rounded-none border-0 bg-transparent p-0"
+                    >
+                      <TabsTrigger value="preview" className={TAB_STYLE}>
+                        Preview
+                      </TabsTrigger>
+                      <TabsTrigger value="source" className={TAB_STYLE}>
+                        Source
+                      </TabsTrigger>
+                      <TabsTrigger value="history" className={TAB_STYLE}>
+                        History
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 </div>
 
-                <div className="mt-6 flex gap-8">
-                  <div className="min-w-0 flex-1 overflow-hidden">
-                    <div
-                      className="wiki-content font-serif text-[0.9375rem] leading-[1.6] [&_.mw-parser-output]:overflow-hidden [&_.mw-parser-output]:mt-0 [&_.mw-parser-output_.hatnote]:italic [&_.mw-parser-output_.hatnote]:text-muted-foreground [&_.mw-parser-output_.hatnote]:mb-4 [&_.mw-parser-output_a]:text-blue-600 [&_.mw-parser-output_a]:hover:underline [&_.mw-parser-output_a]:dark:text-blue-400 [&_.mw-parser-output_h2]:text-xl [&_.mw-parser-output_h2]:font-normal [&_.mw-parser-output_h2]:mt-8 [&_.mw-parser-output_h2]:mb-3 [&_.mw-parser-output_h2]:scroll-mt-20 [&_.mw-parser-output_h3]:text-lg [&_.mw-parser-output_h3]:font-normal [&_.mw-parser-output_h3]:mt-6 [&_.mw-parser-output_h3]:mb-2 [&_.mw-parser-output_p]:mb-3 [&_.mw-parser-output_ul]:mb-3 [&_.mw-parser-output_ul]:pl-6 [&_.mw-parser-output_ol]:mb-3 [&_.mw-parser-output_ol]:pl-6 [&_.mw-parser-output_table]:border [&_.mw-parser-output_table]:border-border [&_.mw-parser-output_th]:border [&_.mw-parser-output_th]:border-border [&_.mw-parser-output_th]:bg-muted/30 [&_.mw-parser-output_th]:p-2 [&_.mw-parser-output_td]:border [&_.mw-parser-output_td]:border-border [&_.mw-parser-output_td]:p-2 [&_.mw-parser-output_.infobox]:float-right [&_.mw-parser-output_.infobox]:ml-4 [&_.mw-parser-output_.infobox]:mb-4 [&_.mw-parser-output_.infobox]:border [&_.mw-parser-output_.infobox]:border-border [&_.mw-parser-output_.infobox]:bg-muted/30 [&_.mw-parser-output_.infobox]:max-w-[320px] [&_.mw-parser-output_.sidebar]:!bg-muted/30 [&_.mw-parser-output_.sidebar]:!border-border [&_.mw-parser-output_.sidebar]:text-foreground [&_.mw-parser-output_.sidebar_th]:!bg-muted/50 [&_.mw-parser-output_.sidebar_th]:!border-border [&_.mw-parser-output_.sidebar_td]:!border-border [&_.mw-parser-output_.sidebar_a]:text-blue-600 [&_.mw-parser-output_.sidebar_a]:hover:underline [&_.mw-parser-output_.sidebar_a]:dark:text-blue-400 [&_.mw-parser-output_.sidebar-list-title]:!bg-muted/50 [&_.mw-parser-output_.sidebar-list-title]:!text-foreground [&_.mw-parser-output_figure]:float-right [&_.mw-parser-output_figure]:ml-4 [&_.mw-parser-output_figure]:mb-4 [&_.mw-parser-output_.thumb]:float-right [&_.mw-parser-output_.thumb]:ml-4 [&_.mw-parser-output_.thumb]:mb-4 [&_.mw-parser-output_.tleft]:float-left [&_.mw-parser-output_.tleft]:mr-4 [&_.mw-parser-output_.tleft]:mb-4 [&_.mw-parser-output_.navbox]:!bg-muted/30 [&_.mw-parser-output_.navbox]:!border [&_.mw-parser-output_.navbox]:!border-border [&_.mw-parser-output_.navbox]:text-foreground [&_.mw-parser-output_.navbox_th]:!bg-muted/50 [&_.mw-parser-output_.navbox_th]:!border-border [&_.mw-parser-output_.navbox_td]:!border-border [&_.mw-parser-output_.navbox_a]:text-blue-600 [&_.mw-parser-output_.navbox_a]:hover:underline [&_.mw-parser-output_.navbox_a]:dark:text-blue-400 [&_.mw-parser-output_.navbox-group]:!bg-muted/50 [&_.mw-parser-output_.navbox-group]:!text-foreground [&_.mw-parser-output_.navbox-abovebelow]:!bg-muted/50 [&_.mw-parser-output_.navbox-abovebelow]:!text-foreground [&_.mw-parser-output_.navbox-list]:!bg-muted/30 [&_.mw-parser-output_.navbox-list]:!text-foreground [&_.mw-parser-output_.navbox-list-with-group]:!bg-muted/30 [&_.mw-parser-output_.navbox-list-with-group]:!text-foreground [&_.mw-parser-output_.navbox-odd]:!bg-muted/30 [&_.mw-parser-output_.navbox-odd]:!text-foreground [&_.mw-parser-output_.navbox-even]:!bg-muted/30 [&_.mw-parser-output_.navbox-even]:!text-foreground [&_.mw-parser-output_.navbox-inner]:!bg-muted/30 [&_.mw-parser-output_.navbox-inner]:!text-foreground [&_.mw-parser-output_img]:max-w-full [&_.mw-parser-output_img]:h-auto"
-                      dangerouslySetInnerHTML={{ __html: article.html }}
-                    />
+                <div className="mt-0">
+                  {panelTab === "article" && viewTab === "preview" && (
+                    <>
+                      <div className="xl:hidden">
+                        <Collapsible defaultOpen={false} className="group">
+                          <CollapsibleTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="flex w-full items-center justify-between gap-2 border border-border py-2 px-3 text-left font-normal"
+                            >
+                              <span className="flex items-center gap-2">
+                                <ListOrdered className="size-4" />
+                                Contents
+                              </span>
+                              <ChevronDown className="size-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <nav className="mt-0 border border-border border-t-0 p-3">
+                              <ul className="space-y-1 text-sm">
+                                {article.sections.map((s) => (
+                                  <li
+                                    key={s.id}
+                                    style={{ paddingLeft: (s.level - 1) * 12 }}
+                                  >
+                                    <a
+                                      href={`#${s.id}`}
+                                      className="text-blue-600 hover:underline dark:text-blue-400"
+                                    >
+                                      {s.title}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </nav>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </div>
 
-                    {article.categories.length > 0 && (
-                      <section className="mt-6 border-t border-border pt-4">
-                        <div className="text-xs text-muted-foreground">
-                          Categories:{" "}
-                          {article.categories.map((cat, i) => (
-                            <span key={i}>
-                              <Link
-                                href={`/wiki/Category:${encodeURIComponent(
-                                  cat
-                                )}`}
-                                className="text-blue-600 hover:underline dark:text-blue-400"
-                              >
-                                {cat}
-                              </Link>
-                              {i < article.categories.length - 1 ? " · " : ""}
-                            </span>
-                          ))}
+                      <div className="mt-6 flex gap-8">
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <div
+                            className="wiki-content font-serif text-[0.9375rem] leading-[1.6] [&_.mw-parser-output]:overflow-hidden [&_.mw-parser-output]:mt-0 [&_.mw-parser-output_.hatnote]:italic [&_.mw-parser-output_.hatnote]:text-muted-foreground [&_.mw-parser-output_.hatnote]:mb-4 [&_.mw-parser-output_a]:text-blue-600 [&_.mw-parser-output_a]:hover:underline [&_.mw-parser-output_a]:dark:text-blue-400 [&_.mw-parser-output_h2]:text-xl [&_.mw-parser-output_h2]:font-normal [&_.mw-parser-output_h2]:mt-8 [&_.mw-parser-output_h2]:mb-3 [&_.mw-parser-output_h2]:scroll-mt-20 [&_.mw-parser-output_h3]:text-lg [&_.mw-parser-output_h3]:font-normal [&_.mw-parser-output_h3]:mt-6 [&_.mw-parser-output_h3]:mb-2 [&_.mw-parser-output_p]:mb-3 [&_.mw-parser-output_ul]:mb-3 [&_.mw-parser-output_ul]:pl-6 [&_.mw-parser-output_ol]:mb-3 [&_.mw-parser-output_ol]:pl-6 [&_.mw-parser-output_table]:border [&_.mw-parser-output_table]:border-border [&_.mw-parser-output_th]:border [&_.mw-parser-output_th]:border-border [&_.mw-parser-output_th]:bg-muted/30 [&_.mw-parser-output_th]:p-2 [&_.mw-parser-output_td]:border [&_.mw-parser-output_td]:border-border [&_.mw-parser-output_td]:p-2 [&_.mw-parser-output_.infobox]:float-right [&_.mw-parser-output_.infobox]:ml-4 [&_.mw-parser-output_.infobox]:mb-4 [&_.mw-parser-output_.infobox]:border [&_.mw-parser-output_.infobox]:border-border [&_.mw-parser-output_.infobox]:bg-muted/30 [&_.mw-parser-output_.infobox]:max-w-[320px] [&_.mw-parser-output_.sidebar]:!bg-muted/30 [&_.mw-parser-output_.sidebar]:!border-border [&_.mw-parser-output_.sidebar]:text-foreground [&_.mw-parser-output_.sidebar_th]:!bg-muted/50 [&_.mw-parser-output_.sidebar_th]:!border-border [&_.mw-parser-output_.sidebar_td]:!border-border [&_.mw-parser-output_.sidebar_a]:text-blue-600 [&_.mw-parser-output_.sidebar_a]:hover:underline [&_.mw-parser-output_.sidebar_a]:dark:text-blue-400 [&_.mw-parser-output_.sidebar-list-title]:!bg-muted/50 [&_.mw-parser-output_.sidebar-list-title]:!text-foreground [&_.mw-parser-output_figure]:float-right [&_.mw-parser-output_figure]:ml-4 [&_.mw-parser-output_figure]:mb-4 [&_.mw-parser-output_.thumb]:float-right [&_.mw-parser-output_.thumb]:ml-4 [&_.mw-parser-output_.thumb]:mb-4 [&_.mw-parser-output_.tleft]:float-left [&_.mw-parser-output_.tleft]:mr-4 [&_.mw-parser-output_.tleft]:mb-4 [&_.mw-parser-output_.navbox]:!bg-muted/30 [&_.mw-parser-output_.navbox]:!border [&_.mw-parser-output_.navbox]:!border-border [&_.mw-parser-output_.navbox]:text-foreground [&_.mw-parser-output_.navbox_th]:!bg-muted/50 [&_.mw-parser-output_.navbox_th]:!border-border [&_.mw-parser-output_.navbox_td]:!border-border [&_.mw-parser-output_.navbox_a]:text-blue-600 [&_.mw-parser-output_.navbox_a]:hover:underline [&_.mw-parser-output_.navbox_a]:dark:text-blue-400 [&_.mw-parser-output_.navbox-group]:!bg-muted/50 [&_.mw-parser-output_.navbox-group]:!text-foreground [&_.mw-parser-output_.navbox-abovebelow]:!bg-muted/50 [&_.mw-parser-output_.navbox-abovebelow]:!text-foreground [&_.mw-parser-output_.navbox-list]:!bg-muted/30 [&_.mw-parser-output_.navbox-list]:!text-foreground [&_.mw-parser-output_.navbox-list-with-group]:!bg-muted/30 [&_.mw-parser-output_.navbox-list-with-group]:!text-foreground [&_.mw-parser-output_.navbox-odd]:!bg-muted/30 [&_.mw-parser-output_.navbox-odd]:!text-foreground [&_.mw-parser-output_.navbox-even]:!bg-muted/30 [&_.mw-parser-output_.navbox-even]:!text-foreground [&_.mw-parser-output_.navbox-inner]:!bg-muted/30 [&_.mw-parser-output_.navbox-inner]:!text-foreground [&_.mw-parser-output_img]:max-w-full [&_.mw-parser-output_img]:h-auto"
+                            dangerouslySetInnerHTML={{ __html: article.html }}
+                          />
+
+                          {article.categories.length > 0 && (
+                            <section className="mt-6 border-t border-border pt-4">
+                              <div className="text-xs text-muted-foreground">
+                                Categories:{" "}
+                                {article.categories.map((cat, i) => (
+                                  <span key={i}>
+                                    <Link
+                                      href={`/wiki/Category:${encodeURIComponent(
+                                        cat
+                                      )}`}
+                                      className="text-blue-600 hover:underline dark:text-blue-400"
+                                    >
+                                      {cat}
+                                    </Link>
+                                    {i < article.categories.length - 1
+                                      ? " · "
+                                      : ""}
+                                  </span>
+                                ))}
+                              </div>
+                            </section>
+                          )}
                         </div>
-                      </section>
-                    )}
+                      </div>
+                    </>
+                  )}
+
+                {panelTab === "article" && viewTab === "source" && (
+                  <div className="mt-6">
+                    <pre className="overflow-x-auto rounded border border-border bg-muted/30 p-4 font-mono text-sm whitespace-pre-wrap break-words">
+                      {article.wikitext}
+                    </pre>
                   </div>
+                )}
+
+                  {panelTab === "article" && viewTab === "history" && (
+                    <p className="mt-6 text-sm text-muted-foreground">
+                      View history is not available in this client.
+                    </p>
+                  )}
+
+                  {panelTab === "talk" && (
+                    <p className="mt-6 text-sm text-muted-foreground">
+                      Talk page is not available in this client.
+                    </p>
+                  )}
                 </div>
               </article>
             </div>
@@ -261,7 +339,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
 
         <footer className="mt-12 border-t border-border bg-muted/30">
           <div className="mx-auto max-w-[1500px] px-4 py-8 lg:px-8">
-            <div className="grid gap-6 text-sm sm:grid-cols-2 md:grid-cols-4">
+            <div className="grid gap-6 text-sm sm:grid-cols-2">
               <div>
                 <h4 className="mb-2 font-semibold text-foreground">
                   Openpedia Client
@@ -269,7 +347,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                 <ul className="space-y-1 text-muted-foreground">
                   <li>
                     <Link
-                      href="#"
+                      href="/about"
                       className="text-blue-600 hover:underline dark:text-blue-400"
                     >
                       About
@@ -277,15 +355,9 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                   </li>
                   <li>
                     <Link
-                      href="#"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      Disclaimers
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#"
+                      href="https://github.com/SpyC0der77/wikipedia-next/issues/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-blue-600 hover:underline dark:text-blue-400"
                     >
                       Contact
@@ -324,57 +396,11 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                   </li>
                 </ul>
               </div>
-              <div>
-                <h4 className="mb-2 font-semibold text-foreground">
-                  Resources
-                </h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>
-                    <Link
-                      href="#"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      Recent changes
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      Upload file
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="mb-2 font-semibold text-foreground">
-                  Print/export
-                </h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>
-                    <Link
-                      href="#"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      Download as PDF
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="#"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      Printable version
-                    </Link>
-                  </li>
-                </ul>
-              </div>
             </div>
             <Separator className="my-6" />
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
               <Link
-                href="#"
+                href="/about"
                 className="text-blue-600 hover:underline dark:text-blue-400"
               >
                 Openpedia Client
