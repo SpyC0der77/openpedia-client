@@ -34,6 +34,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { WikipediaArticle } from "@/lib/wikipedia";
 import { WikiSearch } from "@/components/wiki-search";
+import { WikiHistory } from "@/components/wiki-history";
 
 const SIDEBAR_NAV_LINKS = [
   "Main page",
@@ -321,9 +322,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                 )}
 
                   {panelTab === "article" && viewTab === "history" && (
-                    <p className="mt-6 text-sm text-muted-foreground">
-                      View history is not available in this client.
-                    </p>
+                    <WikiHistory title={article.title} />
                   )}
 
                   {panelTab === "talk" && (

@@ -174,3 +174,150 @@ export async function fetchWikipediaArticle(
     description,
   };
 }
+
+export interface WikipediaRevision {
+  revid: number;
+  timestamp: string;
+  user: string;
+  userId?: number;
+  comment: string;
+  size: number;
+  minor?: boolean;
+}
+
+interface WikipediaRevisionsResponse {
+  query?: {
+    pages?: Record<
+      string,
+      {
+        revisions?: Array<{
+          revid: number;
+          timestamp: string;
+          user?: string;
+          userid?: number;
+          comment?: string;
+          size?: number;
+          minor?: boolean;
+        }>;
+      }
+    >;
+  };
+  continue?: { rvcontinue?: string };
+}
+
+export async function fetchWikipediaRevisions(
+  title: string,
+  limit = 50,
+  continueFrom?: string
+): Promise<{ revisions: WikipediaRevision[]; continue?: string }> {
+  const encodedTitle = encodeURIComponent(title.replace(/_/g, " "));
+  const params = new URLSearchParams({
+    action: "query",
+    prop: "revisions",
+    titles: encodedTitle,
+    rvprop: "ids|timestamp|user|userid|comment|size|flags",
+    rvlimit: String(limit),
+    rvslots: "main",
+    format: "json",
+    origin: "*",
+  });
+  if (continueFrom) params.set("rvcontinue", continueFrom);
+
+  const res = await fetch(`${WIKI_API}?${params}`, {
+    headers: { "User-Agent": USER_AGENT },
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) return { revisions: [] };
+
+  const data = (await res.json()) as WikipediaRevisionsResponse;
+  const pages = data.query?.pages;
+  if (!pages) return { revisions: [] };
+
+  const page = Object.values(pages)[0];
+  const revs = page?.revisions ?? [];
+  const revisions: WikipediaRevision[] = revs.map((r) => ({
+    revid: r.revid,
+    timestamp: r.timestamp,
+    user: r.user ?? "(hidden)",
+    userId: r.userid,
+    comment: r.comment ?? "",
+    size: r.size ?? 0,
+    minor: r.minor,
+  }));
+
+  return {
+    revisions,
+    continue: data.continue?.rvcontinue,
+  };
+}
+
+export interface WikipediaCompareResult {
+  fromRevId: number;
+  toRevId: number;
+  diffHtml: string;
+  fromTitle?: string;
+  toTitle?: string;
+  fromUser?: string;
+  toUser?: string;
+  fromTimestamp?: string;
+  toTimestamp?: string;
+  fromComment?: string;
+  toComment?: string;
+}
+
+interface WikipediaCompareResponse {
+  compare?: {
+    fromrevid: number;
+    torevid: number;
+    diff?: string;
+    "*"?: string; // MediaWiki returns diff under "*" key
+    fromtitle?: string;
+    totitle?: string;
+    fromuser?: string;
+    touser?: string;
+    fromtimestamp?: string;
+    totimestamp?: string;
+    fromcomment?: string;
+    tocomment?: string;
+  };
+  error?: { code: string; info: string };
+}
+
+export async function fetchWikipediaCompare(
+  fromRevId: number,
+  toRevId: number
+): Promise<WikipediaCompareResult | null> {
+  const params = new URLSearchParams({
+    action: "compare",
+    fromrev: String(fromRevId),
+    torev: String(toRevId),
+    prop: "diff|ids|title|user|timestamp|comment",
+    format: "json",
+    origin: "*",
+  });
+
+  const res = await fetch(`${WIKI_API}?${params}`, {
+    headers: { "User-Agent": USER_AGENT },
+    next: { revalidate: 300 },
+  });
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as WikipediaCompareResponse;
+  if (data.error || !data.compare) return null;
+
+  const c = data.compare;
+  const diffHtml = c.diff ?? c["*"] ?? "";
+  return {
+    fromRevId: c.fromrevid,
+    toRevId: c.torevid,
+    diffHtml: rewriteWikiLinks(diffHtml),
+    fromTitle: c.fromtitle,
+    toTitle: c.totitle,
+    fromUser: c.fromuser,
+    toUser: c.touser,
+    fromTimestamp: c.fromtimestamp,
+    toTimestamp: c.totimestamp,
+    fromComment: c.fromcomment,
+    toComment: c.tocomment,
+  };
+}
