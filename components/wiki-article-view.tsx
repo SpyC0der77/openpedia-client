@@ -6,13 +6,13 @@ import { useTheme } from "next-themes";
 import {
   ChevronDown,
   Menu,
+  Search,
   Sun,
   Moon,
   MoreHorizontal,
   ListOrdered,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -36,25 +43,56 @@ import type { WikipediaArticle } from "@/lib/wikipedia";
 import { WikiSearch } from "@/components/wiki-search";
 import { WikiHistory } from "@/components/wiki-history";
 
-const SIDEBAR_NAV_LINKS = [
-  "Main page",
-  "Contents",
-  "Current events",
-  "Random article",
-  "About",
-  "Contact us",
-  "Donate",
-];
+const SIDEBAR_NAV_LINKS: { label: string; href: string; external?: boolean }[] =
+  [
+    { label: "Main page", href: "/wiki/Main_Page" },
+    { label: "Contents", href: "/wiki/Portal:Contents" },
+    { label: "Current events", href: "/wiki/Portal:Current_events" },
+    { label: "Random article", href: "/random" },
+    { label: "About", href: "/about" },
+    { label: "Contact us", href: "/about" },
+    { label: "Donate", href: "https://donate.wikimedia.org/", external: true },
+  ];
 
-const SIDEBAR_TOOLS_LINKS = [
-  "What links here",
-  "Related changes",
-  "Upload file",
-  "Special pages",
-  "Permanent link",
-  "Page information",
-  "Cite this page",
-];
+function getToolsLinks(
+  articleTitle: string
+): { label: string; href: string; external?: boolean }[] {
+  const slug = encodeURIComponent(articleTitle.replace(/\s+/g, "_"));
+  const wikiTitle = articleTitle.replace(/\s+/g, "_");
+  return [
+    {
+      label: "What links here",
+      href: `https://en.wikipedia.org/wiki/Special:WhatLinksHere/${encodeURIComponent(wikiTitle)}`,
+      external: true,
+    },
+    {
+      label: "Related changes",
+      href: `https://en.wikipedia.org/wiki/Special:RecentChangesLinked/${encodeURIComponent(wikiTitle)}`,
+      external: true,
+    },
+    {
+      label: "Upload file",
+      href: "https://en.wikipedia.org/wiki/Special:Upload",
+      external: true,
+    },
+    {
+      label: "Special pages",
+      href: "https://en.wikipedia.org/wiki/Special:SpecialPages",
+      external: true,
+    },
+    { label: "Permanent link", href: `/wiki/${slug}` },
+    {
+      label: "Page information",
+      href: `https://en.wikipedia.org/wiki/Special:Info/${encodeURIComponent(wikiTitle)}`,
+      external: true,
+    },
+    {
+      label: "Cite this page",
+      href: `https://en.wikipedia.org/wiki/Special:CiteThisPage/${encodeURIComponent(wikiTitle)}`,
+      external: true,
+    },
+  ];
+}
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -91,6 +129,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
   const [viewTab, setViewTab] = useState<"source" | "preview" | "history">(
     "preview"
   );
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <TooltipProvider>
@@ -105,9 +144,16 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[12rem]">
                 {SIDEBAR_NAV_LINKS.map((link) => (
-                  <DropdownMenuItem key={link} asChild>
-                    <Link href="#" className="text-blue-600 dark:text-blue-400">
-                      {link}
+                  <DropdownMenuItem key={link.label} asChild>
+                    <Link
+                      href={link.href}
+                      className="text-blue-600 dark:text-blue-400"
+                      {...(link.external && {
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                      })}
+                    >
+                      {link.label}
                     </Link>
                   </DropdownMenuItem>
                 ))}
@@ -123,6 +169,26 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
               <div className="hidden w-64 max-w-xs sm:block">
                 <WikiSearch />
               </div>
+              <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Search"
+                    className="sm:hidden"
+                  >
+                    <Search className="size-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="top" className="pt-12">
+                  <SheetHeader>
+                    <SheetTitle>Search Openpedia</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    <WikiSearch onSelect={() => setSearchOpen(false)} />
+                  </div>
+                </SheetContent>
+              </Sheet>
               <ThemeToggle />
               <Link href="#">
                 <Button variant="ghost" size="sm" className="text-sm">
@@ -181,13 +247,17 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
               <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Tools
               </div>
-              {SIDEBAR_TOOLS_LINKS.map((link) => (
+              {getToolsLinks(article.title).map((link) => (
                 <Link
-                  key={link}
-                  href="#"
+                  key={link.label}
+                  href={link.href}
                   className="text-blue-600 hover:underline dark:text-blue-400"
+                  {...(link.external && {
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                  })}
                 >
-                  {link}
+                  {link.label}
                 </Link>
               ))}
             </nav>

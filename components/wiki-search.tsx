@@ -6,7 +6,11 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { searchWikipedia, type WikipediaSearchResult } from "@/lib/wikipedia";
 
-export function WikiSearch() {
+interface WikiSearchProps {
+  onSelect?: () => void;
+}
+
+export function WikiSearch({ onSelect }: WikiSearchProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<WikipediaSearchResult[]>([]);
@@ -41,6 +45,7 @@ export function WikiSearch() {
     setSuggestions([]);
     setIsOpen(false);
     router.push(`/wiki/${encodeURIComponent(slug)}`);
+    onSelect?.();
   };
 
   const handleBlur = () => {

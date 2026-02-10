@@ -61,6 +61,19 @@ export interface WikipediaSearchResult {
   slug: string;
 }
 
+export async function fetchRandomArticleTitle(): Promise<string | null> {
+  const res = await fetch(
+    `${WIKI_API}?action=query&list=random&rnnamespace=0&rnlimit=1&format=json&origin=*`,
+    { headers: { "User-Agent": USER_AGENT }, next: { revalidate: 0 } }
+  );
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    query?: { random?: Array<{ title: string }> };
+  };
+  const title = data.query?.random?.[0]?.title;
+  return title ?? null;
+}
+
 export async function searchWikipedia(
   query: string,
   limit = 8
