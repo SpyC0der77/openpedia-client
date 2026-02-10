@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   ChevronDown,
@@ -39,59 +40,102 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { WikipediaArticle } from "@/lib/wikipedia";
+import {
+  type WikipediaArticle,
+  buildWikiPath,
+  SUPPORTED_LANGUAGES,
+  type WikiLang,
+} from "@/lib/wikipedia";
 import { WikiSearch } from "@/components/wiki-search";
 import { WikiHistory } from "@/components/wiki-history";
 
-const SIDEBAR_NAV_LINKS: { label: string; href: string; external?: boolean }[] =
-  [
-    { label: "Main page", href: "/wiki/Main_Page" },
-    { label: "Contents", href: "/wiki/Portal:Contents" },
-    { label: "Current events", href: "/wiki/Portal:Current_events" },
-    { label: "Random article", href: "/random" },
+function getSidebarNavLinks(lang: string): { label: string; href: string; external?: boolean }[] {
+  return [
+    { label: "Main page", href: buildWikiPath("Main_Page", lang) },
+    { label: "Contents", href: buildWikiPath("Portal:Contents", lang) },
+    { label: "Current events", href: buildWikiPath("Portal:Current_events", lang) },
+    { label: "Random article", href: lang === "en" ? "/random" : `/random?lang=${lang}` },
     { label: "About", href: "/about" },
     { label: "Contact us", href: "/about" },
     { label: "Donate", href: "https://donate.wikimedia.org/", external: true },
   ];
+}
 
 function getToolsLinks(
-  articleTitle: string
+  articleTitle: string,
+  lang: string
 ): { label: string; href: string; external?: boolean }[] {
-  const slug = encodeURIComponent(articleTitle.replace(/\s+/g, "_"));
   const wikiTitle = articleTitle.replace(/\s+/g, "_");
+  const wikiHost = `https://${lang}.wikipedia.org`;
   return [
     {
       label: "What links here",
-      href: `https://en.wikipedia.org/wiki/Special:WhatLinksHere/${encodeURIComponent(wikiTitle)}`,
+      href: `${wikiHost}/wiki/Special:WhatLinksHere/${encodeURIComponent(wikiTitle)}`,
       external: true,
     },
     {
       label: "Related changes",
-      href: `https://en.wikipedia.org/wiki/Special:RecentChangesLinked/${encodeURIComponent(wikiTitle)}`,
+      href: `${wikiHost}/wiki/Special:RecentChangesLinked/${encodeURIComponent(wikiTitle)}`,
       external: true,
     },
     {
       label: "Upload file",
-      href: "https://en.wikipedia.org/wiki/Special:Upload",
+      href: `${wikiHost}/wiki/Special:Upload`,
       external: true,
     },
     {
       label: "Special pages",
-      href: "https://en.wikipedia.org/wiki/Special:SpecialPages",
+      href: `${wikiHost}/wiki/Special:SpecialPages`,
       external: true,
     },
-    { label: "Permanent link", href: `/wiki/${slug}` },
+    { label: "Permanent link", href: buildWikiPath(wikiTitle, lang) },
     {
       label: "Page information",
-      href: `https://en.wikipedia.org/wiki/Special:Info/${encodeURIComponent(wikiTitle)}`,
+      href: `${wikiHost}/wiki/Special:Info/${encodeURIComponent(wikiTitle)}`,
       external: true,
     },
     {
       label: "Cite this page",
-      href: `https://en.wikipedia.org/wiki/Special:CiteThisPage/${encodeURIComponent(wikiTitle)}`,
+      href: `${wikiHost}/wiki/Special:CiteThisPage/${encodeURIComponent(wikiTitle)}`,
       external: true,
     },
   ];
+}
+
+function LanguageDropdown({
+  lang,
+  onChange,
+}: {
+  lang: string;
+  onChange: (lang: WikiLang) => void;
+}) {
+  const currentLang = SUPPORTED_LANGUAGES.find((l) => l.code === lang);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
+          aria-label="Select language"
+        >
+          {currentLang?.name ?? lang}
+          <ChevronDown className="size-4 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="max-h-[min(20rem,50vh)] overflow-y-auto">
+        {SUPPORTED_LANGUAGES.map(({ code, name }) => (
+          <DropdownMenuItem
+            key={code}
+            onClick={() => onChange(code)}
+            className={code === lang ? "bg-accent" : ""}
+          >
+            {name}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 function ThemeToggle() {
@@ -119,12 +163,15 @@ function ThemeToggle() {
 
 interface WikiArticleViewProps {
   article: WikipediaArticle;
+  lang: string;
+  titleParam: string;
 }
 
 const TAB_STYLE =
   "rounded-none border-0 data-[state=active]:border-0 data-[state=active]:bg-transparent after:opacity-0";
 
-export function WikiArticleView({ article }: WikiArticleViewProps) {
+export function WikiArticleView({ article, lang, titleParam }: WikiArticleViewProps) {
+  const router = useRouter();
   const [panelTab, setPanelTab] = useState<"article" | "talk">("article");
   const [viewTab, setViewTab] = useState<"source" | "preview" | "history">(
     "preview"
@@ -143,7 +190,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="min-w-[12rem]">
-                {SIDEBAR_NAV_LINKS.map((link) => (
+                {getSidebarNavLinks(lang).map((link) => (
                   <DropdownMenuItem key={link.label} asChild>
                     <Link
                       href={link.href}
@@ -247,7 +294,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
               <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Tools
               </div>
-              {getToolsLinks(article.title).map((link) => (
+              {getToolsLinks(article.title, lang).map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
@@ -277,7 +324,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                   >
                     <TabsList
                       variant="line"
-                      className="h-9 w-auto rounded-none border-0 bg-transparent p-0"
+                      className="h-9 w-auto shrink-0 rounded-none border-0 bg-transparent p-0"
                     >
                       <TabsTrigger value="article" className={TAB_STYLE}>
                         Article
@@ -287,27 +334,39 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
-                  <Tabs
-                    value={viewTab}
-                    onValueChange={(v) =>
-                      setViewTab(v as "source" | "preview" | "history")
-                    }
-                  >
-                    <TabsList
-                      variant="line"
-                      className="h-9 w-auto rounded-none border-0 bg-transparent p-0"
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Tabs
+                      value={viewTab}
+                      onValueChange={(v) =>
+                        setViewTab(v as "source" | "preview" | "history")
+                      }
                     >
-                      <TabsTrigger value="preview" className={TAB_STYLE}>
-                        Preview
-                      </TabsTrigger>
-                      <TabsTrigger value="source" className={TAB_STYLE}>
-                        Source
-                      </TabsTrigger>
-                      <TabsTrigger value="history" className={TAB_STYLE}>
-                        History
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                      <TabsList
+                        variant="line"
+                        className="h-9 w-auto shrink-0 rounded-none border-0 bg-transparent p-0"
+                      >
+                        <TabsTrigger value="preview" className={TAB_STYLE}>
+                          Preview
+                        </TabsTrigger>
+                        <TabsTrigger value="source" className={TAB_STYLE}>
+                          Source
+                        </TabsTrigger>
+                        <TabsTrigger value="history" className={TAB_STYLE}>
+                          History
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                    <LanguageDropdown
+                      lang={lang}
+                      onChange={(newLang) => {
+                        router.push(
+                          newLang === "en"
+                            ? `/wiki/${titleParam}`
+                            : `/wiki/${titleParam}?lang=${newLang}`
+                        );
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div className="mt-0">
@@ -363,9 +422,10 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                                 {article.categories.map((cat, i) => (
                                   <span key={i}>
                                     <Link
-                                      href={`/wiki/Category:${encodeURIComponent(
-                                        cat
-                                      )}`}
+                                      href={buildWikiPath(
+                                        `Category:${cat}`,
+                                        lang
+                                      )}
                                       className="text-blue-600 hover:underline dark:text-blue-400"
                                     >
                                       {cat}
@@ -392,7 +452,7 @@ export function WikiArticleView({ article }: WikiArticleViewProps) {
                 )}
 
                   {panelTab === "article" && viewTab === "history" && (
-                    <WikiHistory title={article.title} />
+                    <WikiHistory title={article.title} lang={lang} />
                   )}
 
                   {panelTab === "talk" && (

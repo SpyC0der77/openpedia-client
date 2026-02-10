@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 interface ComparePageProps {
   params: Promise<{ title: string }>;
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; lang?: string }>;
 }
 
 export async function generateMetadata({
@@ -29,8 +29,9 @@ export default async function WikiComparePage({
   searchParams,
 }: ComparePageProps) {
   const { title } = await params;
-  const { from, to } = await searchParams;
+  const { from, to, lang } = await searchParams;
   const slug = decodeURIComponent(title).replace(/_/g, " ");
+  const langCode = lang ?? "en";
 
   const fromRevId = from ? parseInt(from, 10) : NaN;
   const toRevId = to ? parseInt(to, 10) : NaN;
@@ -39,10 +40,13 @@ export default async function WikiComparePage({
     notFound();
   }
 
-  const result = await fetchWikipediaCompare(fromRevId, toRevId);
+  const result = await fetchWikipediaCompare(fromRevId, toRevId, langCode);
   if (!result) notFound();
 
-  const wikiPath = `/wiki/${encodeURIComponent(title)}`;
+  const wikiPath =
+    langCode === "en"
+      ? `/wiki/${encodeURIComponent(title)}`
+      : `/wiki/${encodeURIComponent(title)}?lang=${langCode}`;
 
   return (
     <div className="min-h-screen bg-background">

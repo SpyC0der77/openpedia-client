@@ -1,8 +1,34 @@
-const WIKI_API = "https://en.wikipedia.org/w/api.php";
-const WIKI_REST = "https://en.wikipedia.org/api/rest_v1";
-
 const USER_AGENT =
   "OpenpediaClient/1.0 (https://github.com/; educational project)";
+
+export const SUPPORTED_LANGUAGES = [
+  { code: "en", name: "English" },
+  { code: "de", name: "Deutsch" },
+  { code: "es", name: "Español" },
+  { code: "fr", name: "Français" },
+  { code: "it", name: "Italiano" },
+  { code: "ja", name: "日本語" },
+  { code: "nl", name: "Nederlands" },
+  { code: "pl", name: "Polski" },
+  { code: "pt", name: "Português" },
+  { code: "ru", name: "Русский" },
+  { code: "zh", name: "中文" },
+] as const;
+
+export type WikiLang = (typeof SUPPORTED_LANGUAGES)[number]["code"];
+
+export function buildWikiPath(slug: string, lang: string): string {
+  const path = `/wiki/${encodeURIComponent(slug)}`;
+  return lang === "en" ? path : `${path}?lang=${lang}`;
+}
+
+function getWikiUrls(lang: string) {
+  const host = `${lang}.wikipedia.org`;
+  return {
+    api: `https://${host}/w/api.php`,
+    rest: `https://${host}/api/rest_v1`,
+  };
+}
 
 interface TocSection {
   toclevel: number;
@@ -49,10 +75,11 @@ export interface WikipediaArticle {
   description?: string;
 }
 
-function rewriteWikiLinks(html: string): string {
+function rewriteWikiLinks(html: string, lang: string): string {
+  const suffix = lang === "en" ? "" : `?lang=${lang}`;
   return html.replace(
-    /href="(?:https?:\/\/en\.wikipedia\.org)?(\/wiki\/[^"]+)"/g,
-    (_, path) => `href="${path}"`
+    /href="(?:https?:\/\/[a-z0-9-]+\.wikipedia\.org)?(\/wiki\/[^"]+)"/g,
+    (_, path) => `href="${path}${suffix}"`
   );
 }
 
@@ -61,9 +88,12 @@ export interface WikipediaSearchResult {
   slug: string;
 }
 
-export async function fetchRandomArticleTitle(): Promise<string | null> {
+export async function fetchRandomArticleTitle(
+  lang = "en"
+): Promise<string | null> {
+  const { api } = getWikiUrls(lang);
   const res = await fetch(
-    `${WIKI_API}?action=query&list=random&rnnamespace=0&rnlimit=1&format=json&origin=*`,
+    `${api}?action=query&list=random&rnnamespace=0&rnlimit=1&format=json&origin=*`,
     { headers: { "User-Agent": USER_AGENT }, next: { revalidate: 0 } }
   );
   if (!res.ok) return null;
@@ -76,11 +106,13 @@ export async function fetchRandomArticleTitle(): Promise<string | null> {
 
 export async function searchWikipedia(
   query: string,
-  limit = 8
+  limit = 8,
+  lang = "en"
 ): Promise<WikipediaSearchResult[]> {
   if (!query.trim()) return [];
+  const { api } = getWikiUrls(lang);
   const res = await fetch(
-    `${WIKI_API}?action=opensearch&search=${encodeURIComponent(
+    `${api}?action=opensearch&search=${encodeURIComponent(
       query
     )}&limit=${limit}&format=json&origin=*`,
     { headers: { "User-Agent": USER_AGENT } }
@@ -100,24 +132,26 @@ export async function searchWikipedia(
 }
 
 export async function fetchWikipediaArticle(
-  title: string
+  title: string,
+  lang = "en"
 ): Promise<WikipediaArticle | null> {
   const encodedTitle = encodeURIComponent(title.replace(/_/g, " "));
+  const { api, rest } = getWikiUrls(lang);
 
   const [summaryRes, parseRes, revisionsRes] = await Promise.all([
-    fetch(`${WIKI_REST}/page/summary/${encodedTitle}`, {
+    fetch(`${rest}/page/summary/${encodedTitle}`, {
       headers: { "User-Agent": USER_AGENT },
       next: { revalidate: 3600 },
     }),
     fetch(
-      `${WIKI_API}?action=parse&page=${encodedTitle}&prop=text|sections|categories&format=json&origin=*`,
+      `${api}?action=parse&page=${encodedTitle}&prop=text|sections|categories&format=json&origin=*`,
       {
         headers: { "User-Agent": USER_AGENT },
         next: { revalidate: 3600 },
       }
     ),
     fetch(
-      `${WIKI_API}?action=query&prop=revisions&rvprop=content&titles=${encodedTitle}&format=json&origin=*`,
+      `${api}?action=query&prop=revisions&rvprop=content&titles=${encodedTitle}&format=json&origin=*`,
       {
         headers: { "User-Agent": USER_AGENT },
         next: { revalidate: 3600 },
@@ -131,7 +165,7 @@ export async function fetchWikipediaArticle(
   if (parseData.error || !parseData.parse) return null;
 
   const { parse } = parseData;
-  const html = rewriteWikiLinks(parse.text["*"]);
+  const html = rewriteWikiLinks(parse.text["*"], lang);
 
   let sections: { id: string; title: string; level: number }[] = [];
   if (parse.sections?.length) {
@@ -221,9 +255,11 @@ interface WikipediaRevisionsResponse {
 export async function fetchWikipediaRevisions(
   title: string,
   limit = 50,
-  continueFrom?: string
+  continueFrom?: string,
+  lang = "en"
 ): Promise<{ revisions: WikipediaRevision[]; continue?: string }> {
   const encodedTitle = encodeURIComponent(title.replace(/_/g, " "));
+  const { api } = getWikiUrls(lang);
   const params = new URLSearchParams({
     action: "query",
     prop: "revisions",
@@ -236,7 +272,7 @@ export async function fetchWikipediaRevisions(
   });
   if (continueFrom) params.set("rvcontinue", continueFrom);
 
-  const res = await fetch(`${WIKI_API}?${params}`, {
+  const res = await fetch(`${api}?${params}`, {
     headers: { "User-Agent": USER_AGENT },
     next: { revalidate: 300 },
   });
@@ -298,8 +334,10 @@ interface WikipediaCompareResponse {
 
 export async function fetchWikipediaCompare(
   fromRevId: number,
-  toRevId: number
+  toRevId: number,
+  lang = "en"
 ): Promise<WikipediaCompareResult | null> {
+  const { api } = getWikiUrls(lang);
   const params = new URLSearchParams({
     action: "compare",
     fromrev: String(fromRevId),
@@ -309,7 +347,7 @@ export async function fetchWikipediaCompare(
     origin: "*",
   });
 
-  const res = await fetch(`${WIKI_API}?${params}`, {
+  const res = await fetch(`${api}?${params}`, {
     headers: { "User-Agent": USER_AGENT },
     next: { revalidate: 300 },
   });
@@ -323,7 +361,7 @@ export async function fetchWikipediaCompare(
   return {
     fromRevId: c.fromrevid,
     toRevId: c.torevid,
-    diffHtml: rewriteWikiLinks(diffHtml),
+    diffHtml: rewriteWikiLinks(diffHtml, lang),
     fromTitle: c.fromtitle,
     toTitle: c.totitle,
     fromUser: c.fromuser,

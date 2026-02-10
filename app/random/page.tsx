@@ -1,9 +1,16 @@
 import { redirect } from "next/navigation";
-import { fetchRandomArticleTitle } from "@/lib/wikipedia";
+import { fetchRandomArticleTitle, buildWikiPath } from "@/lib/wikipedia";
 
-export default async function RandomPage() {
-  const title = await fetchRandomArticleTitle();
-  if (!title) redirect("/wiki/Main_Page");
+interface RandomPageProps {
+  searchParams: Promise<{ lang?: string }>;
+}
+
+export default async function RandomPage({ searchParams }: RandomPageProps) {
+  const { lang } = await searchParams;
+  const langCode = lang ?? "en";
+
+  const title = await fetchRandomArticleTitle(langCode);
+  if (!title) redirect(buildWikiPath("Main_Page", langCode));
   const slug = title.replace(/\s+/g, "_");
-  redirect(`/wiki/${encodeURIComponent(slug)}`);
+  redirect(buildWikiPath(slug, langCode));
 }

@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const title = searchParams.get("title");
   const limit = searchParams.get("limit");
   const rvcontinue = searchParams.get("rvcontinue");
+  const lang = searchParams.get("lang") ?? "en";
 
   if (!title?.trim()) {
     return NextResponse.json(
@@ -17,7 +18,8 @@ export async function GET(request: Request) {
   const { revisions, continue: cont } = await fetchWikipediaRevisions(
     title,
     limit ? parseInt(limit, 10) : 50,
-    rvcontinue ?? undefined
+    rvcontinue ?? undefined,
+    lang
   );
 
   return NextResponse.json({ revisions, continue: cont });

@@ -5,6 +5,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const from = searchParams.get("from");
   const to = searchParams.get("to");
+  const lang = searchParams.get("lang") ?? "en";
 
   const fromRevId = from ? parseInt(from, 10) : NaN;
   const toRevId = to ? parseInt(to, 10) : NaN;
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const result = await fetchWikipediaCompare(fromRevId, toRevId);
+  const result = await fetchWikipediaCompare(fromRevId, toRevId, lang);
   if (!result) {
     return NextResponse.json(
       { error: "Could not compare revisions" },

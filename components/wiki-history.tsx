@@ -19,9 +19,10 @@ const PAGE_SIZE = 20;
 
 interface WikiHistoryProps {
   title: string;
+  lang?: string;
 }
 
-export function WikiHistory({ title }: WikiHistoryProps) {
+export function WikiHistory({ title, lang = "en" }: WikiHistoryProps) {
   const [revisions, setRevisions] = useState<WikipediaRevision[]>([]);
   const [continueKey, setContinueKey] = useState<string | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,7 +34,14 @@ export function WikiHistory({ title }: WikiHistoryProps) {
   const [fromRev, setFromRev] = useState<WikipediaRevision | null>(null);
   const [toRev, setToRev] = useState<WikipediaRevision | null>(null);
 
-  const comparePath = `/wiki/${encodeURIComponent(title.replace(/\s+/g, "_"))}/compare`;
+  const titleSlug = encodeURIComponent(title.replace(/\s+/g, "_"));
+  const compareBase = `/wiki/${titleSlug}/compare`;
+
+  function getCompareUrl(from: number, to: number): string {
+    const params = new URLSearchParams({ from: String(from), to: String(to) });
+    if (lang !== "en") params.set("lang", lang);
+    return `${compareBase}?${params}`;
+  }
 
   const loadRevisions = useCallback(
     async (append = false) => {
@@ -45,6 +53,7 @@ export function WikiHistory({ title }: WikiHistoryProps) {
         const params = new URLSearchParams({
           title,
           limit: String(PAGE_SIZE),
+          lang,
         });
         if (append && continueKey) params.set("rvcontinue", continueKey);
         const res = await fetch(`/api/wiki/revisions?${params}`);
@@ -68,14 +77,14 @@ export function WikiHistory({ title }: WikiHistoryProps) {
         setLoadMoreLoading(false);
       }
     },
-    [title, continueKey]
+    [title, continueKey, lang]
   );
 
   useEffect(() => {
     loadRevisions();
     setCurrentPage(1);
     setPendingNextPage(null);
-  }, [title]);
+  }, [title, lang]);
 
   useEffect(() => {
     if (!loadMoreLoading && pendingNextPage !== null) {
@@ -159,7 +168,10 @@ export function WikiHistory({ title }: WikiHistoryProps) {
         {hasSelection && (
           <Button size="sm" asChild className="gap-1.5">
             <Link
-              href={`${comparePath}?from=${fromRev!.revid < toRev!.revid ? fromRev!.revid : toRev!.revid}&to=${fromRev!.revid < toRev!.revid ? toRev!.revid : fromRev!.revid}`}
+              href={getCompareUrl(
+                fromRev!.revid < toRev!.revid ? fromRev!.revid : toRev!.revid,
+                fromRev!.revid < toRev!.revid ? toRev!.revid : fromRev!.revid
+              )}
             >
               <GitCompare className="size-4" />
               Compare
@@ -202,7 +214,10 @@ export function WikiHistory({ title }: WikiHistoryProps) {
                     {pageRevisions.indexOf(r) < pageRevisions.length - 1 && (
                       <Button variant="ghost" size="xs" asChild className="gap-0.5">
                         <Link
-                          href={`${comparePath}?from=${pageRevisions[pageRevisions.indexOf(r) + 1].revid}&to=${r.revid}`}
+                          href={getCompareUrl(
+                            pageRevisions[pageRevisions.indexOf(r) + 1].revid,
+                            r.revid
+                          )}
                         >
                           Compare with previous
                         </Link>
