@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Shuffle, BookOpen } from "lucide-react";
 import { WikiSearch } from "@/components/wiki-search";
+import { WikiAuth } from "@/components/wiki-auth";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -13,13 +14,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="mx-auto flex h-14 max-w-[1500px] items-center gap-4 px-4">
+        <div className="mx-auto flex h-14 max-w-[1500px] items-center justify-between gap-4 px-4">
           <Link
             href="/"
             className="shrink-0 font-sans text-xl font-bold tracking-tight text-foreground"
           >
             Openpedia <span className="text-muted-foreground">Client</span>
           </Link>
+          <WikiAuth />
         </div>
       </header>
 

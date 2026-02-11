@@ -48,6 +48,7 @@ import {
 } from "@/lib/wikipedia";
 import { WikiSearch } from "@/components/wiki-search";
 import { WikiHistory } from "@/components/wiki-history";
+import { WikiAuth } from "@/components/wiki-auth";
 
 function getSidebarNavLinks(lang: string): { label: string; href: string; external?: boolean }[] {
   return [
@@ -237,16 +238,7 @@ export function WikiArticleView({ article, lang, titleParam }: WikiArticleViewPr
                 </SheetContent>
               </Sheet>
               <ThemeToggle />
-              <Link href="#">
-                <Button variant="ghost" size="sm" className="text-sm">
-                  Create account
-                </Button>
-              </Link>
-              <Link href="#">
-                <Button variant="ghost" size="sm" className="text-sm">
-                  Log in
-                </Button>
-              </Link>
+              <WikiAuth />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon-sm">

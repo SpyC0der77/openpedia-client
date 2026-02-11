@@ -18,6 +18,22 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Wikipedia OAuth Login
+
+This app supports signing in with your Wikipedia/Wikimedia account via OAuth 2.0.
+
+### Setup
+
+1. Copy `.env.example` to `.env.local`
+2. Generate `AUTH_SECRET`: `npx auth secret`
+3. Register an OAuth 2.0 consumer at [meta.wikimedia.org](https://meta.wikimedia.org/wiki/Special:OAuthConsumerRegistration/propose/oauth2):
+   - Add redirect URL: `http://localhost:3000/api/auth/callback/wikimedia` (or your production URL)
+   - Select "User identity verification only" for minimal scope (faster approval)
+   - Do not check "This consumer is only for [your username]"
+4. After creating the consumer, copy the client ID and secret to `AUTH_WIKIMEDIA_ID` and `AUTH_WIKIMEDIA_SECRET`
+
+You can test immediately with your own Wikimedia account. Public use may require admin approval (typically within a few days).
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
