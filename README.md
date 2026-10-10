@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Openpedia Client
 
-## Getting Started
+A Wikipedia reader built with Next.js. Search articles, open a random page, browse in different languages, and inspect revision history.
 
-First, run the development server:
+## What it does
+
+- Search Wikipedia and open articles at `/wiki/[title]`.
+- Choose from 11 supported Wikipedia languages.
+- Browse article sections and follow internal links.
+- View revision history and compare revisions.
+- Switch between light and dark themes.
+
+## Run locally
+
+Use Node.js 20.9+ and npm.
 
 ```bash
+git clone https://github.com/SpyC0der77/openpedia-client.git
+cd openpedia-client
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the development server |
+| `npm run build` | Build the production app |
+| `npm run start` | Serve a production build |
+| `npm run lint` | Run ESLint |
 
-## Learn More
+Run `build` before `start`.
 
-To learn more about Next.js, take a look at the following resources:
+## Dependencies and limitations
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The server fetches content from Wikipedia APIs. No API key is required, but article loading, search, and history need network access to Wikipedia. Wikipedia content is subject to its upstream attribution and licensing requirements.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Source layout
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [`lib/wikipedia.ts`](lib/wikipedia.ts): Wikipedia APIs and language support.
+- [`components/wiki-article-view.tsx`](components/wiki-article-view.tsx): Article reader.
+- [`components/wiki-history.tsx`](components/wiki-history.tsx): Revision history.
+- [`app/wiki/[title]/compare/page.tsx`](app/wiki/[title]/compare/page.tsx): Revision comparison.
